@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Credit Requests</title>
+    <script>
+        async function fetchRequests() {
+            const response = await fetch("/admin/credit-requests");
+            const data = await response.json();
+
+            if (data.error) {
+                alert("Unauthorized access!");
+                return;
+            }
+
+            const table = document.getElementById("requests-table");
+            table.innerHTML = "<tr><th>User ID</th><th>Credits Requested</th><th>Action</th></tr>";
+
+            data.forEach(req => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${req.user_id}</td>
+                    <td>${req.credits}</td>
+                    <td>
+                        <button onclick="approve(${req.id}, ${req.user_id}, ${req.credits})">Approve</button>
+                        <button onclick="deny(${req.id})">Deny</button>
+                    </td>
+                `;
+                table.appendChild(row);
+            });
+        }
+
+        async function approve(requestId, userId, credits) {
+            await fetch("/admin/credit-approve", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ request_id: requestId, user_id: userId, credits: credits })
+            });
+            fetchRequests();
+        }
+
+        async function deny(requestId) {
+            await fetch("/admin/credit-deny", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ request_id: requestId })
+            });
+            fetchRequests();
+        }
+
+        window.onload = fetchRequests;
+    </script>
+</head>
+<body>
+    <h1>Admin Credit Requests</h1>
+    <table id="requests-table">
+        <tr><th>User ID</th><th>Credits Requested</th><th>Action</th></tr>
+    </table>
+</body>
+</html>
